@@ -52,6 +52,32 @@ func DescribeDatasourceTablesMySQL(ctx context.Context, url *pbdatasource.MySQLU
 	return
 }
 
+func DescribeDatasourceTablesOceanBase(ctx context.Context, url *pbdatasource.OceanBaseURL) (items []string, err error) {
+	dsn := fmt.Sprintf(
+		"%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		url.User, url.Password, url.Host, url.Port, url.Database,
+	)
+
+	var db *gorm.DB
+	db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	if err != nil {
+		return
+	}
+	defer func() {
+		// close the connections.
+		if sqlDB, e := db.DB(); e == nil {
+			_ = sqlDB.Close()
+		}
+	}()
+
+	err = db.Raw("select table_name as item from information_schema.tables where  table_schema = ?",
+		url.Database).Scan(&items).Error
+	if err != nil {
+		return nil, err
+	}
+	return
+}
+
 // DescribeDatasourceTablesPostgresSQL get a table list of type PostgresSQL.
 func DescribeDatasourceTablesPostgresSQL(ctx context.Context, url *pbdatasource.PostgreSQLURL) (items []string,
 	err error) {
@@ -382,6 +408,8 @@ func DescribeDataSourceTables(ctx context.Context, sourceType pbmodel.DataSource
 		//empty no need
 	case pbmodel.DataSource_Kafka:
 		items, err = DescribeDatasourceTablesKafka(ctx, sourceURL.Kafka)
+	case pbmodel.DataSource_OceanBase:
+		items, err = DescribeDatasourceTablesOceanBase(ctx, sourceURL.Oceanbase)
 	default:
 		return nil, qerror.NotSupportSourceType.Format(sourceType)
 	}
