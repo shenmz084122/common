@@ -64,6 +64,27 @@ func pingMysql(url *pbdatasource.MySQLURL) (err error) {
 	return nil
 }
 
+func pingOceanBaseURL(url *pbdatasource.OceanBaseURL) (err error) {
+	if err = pingNetwork(url.Host, url.Port); err != nil {
+		return
+	}
+
+	dsn := fmt.Sprintf(
+		"%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		url.User, url.Password, url.Host, url.Port, url.Database,
+	)
+	var db *gorm.DB
+	db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	if err != nil {
+		return err
+	} else {
+		if sqlDB, e := db.DB(); e == nil {
+			_ = sqlDB.Close()
+		}
+	}
+	return nil
+}
+
 func pingPostgreSQL(url *pbdatasource.PostgreSQLURL) (err error) {
 	if err = pingNetwork(url.Host, url.Port); err != nil {
 		return
@@ -336,6 +357,8 @@ func PingDataSourceConnection(ctx context.Context, sourceType pbmodel.DataSource
 		err = pingMongoDb(sourceURL.MongoDb)
 	case pbmodel.DataSource_Redis:
 		err = pingRedis(sourceURL.Redis)
+	case pbmodel.DataSource_OceanBase:
+		err = pingOceanBaseURL(sourceURL.Oceanbase)
 	}
 
 	if err != nil {
