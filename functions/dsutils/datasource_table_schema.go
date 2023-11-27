@@ -85,6 +85,52 @@ func DescribeDatasourceTableSchemaMySQL(ctx context.Context, url *pbdatasource.M
 	return
 }
 
+func DescribeDatasourceTableSchemaOceanBase(ctx context.Context, url *pbdatasource.OceanBaseURL,
+	tableName string) (columns []*pbdatasource.TableColumn, err error) {
+	dsn := fmt.Sprintf(
+		"%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		url.User, url.Password, url.Host, url.Port, url.Database,
+	)
+
+	var db *gorm.DB
+	db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	if err != nil {
+		return
+	}
+	defer func() {
+		// close the connections.
+		if sqlDB, e := db.DB(); e == nil {
+			_ = sqlDB.Close()
+		}
+	}()
+
+	var rawSQL strings.Builder
+	rawSQL.Grow(512)
+
+	rawSQL.WriteString("SELECT ")
+	rawSQL.WriteString("COLUMN_NAME AS name,")
+	rawSQL.WriteString("COLUMN_TYPE AS type,")
+	//rawSQL.WriteString("'' as length,")
+	rawSQL.WriteString("CASE COLUMN_KEY when 'PRI' then 'true' else 'false' end AS is_primary_key")
+	rawSQL.WriteString(" FROM information_schema.columns")
+	rawSQL.WriteString(" WHERE ")
+	rawSQL.WriteString("table_schema = '" + url.Database + "'")
+	rawSQL.WriteString(" AND ")
+	rawSQL.WriteString("table_name = '" + tableName + "'")
+	rawSQL.WriteString(";")
+
+	columns = make([]*pbdatasource.TableColumn, 0)
+	err = db.Raw(rawSQL.String()).Scan(&columns).Error
+	if err != nil {
+		return
+	}
+	for _, column := range columns {
+		column.Type = escapeColumnType(column.Type)
+	}
+
+	return
+}
+
 func DescribeDatasourceTableSchemaPostgreSQL(ctx context.Context, url *pbdatasource.PostgreSQLURL,
 	tableName string) (columns []*pbdatasource.TableColumn, err error) {
 	dsn := fmt.Sprintf(
@@ -349,7 +395,7 @@ func DescribeDatasourceTableSchemaHive(ctx context.Context, url *pbdatasource.Hi
 	return
 }
 
-//DescribeDataSourceTableSchema get the table schema of specified table in datasource.
+// DescribeDataSourceTableSchema get the table schema of specified table in datasource.
 func DescribeDataSourceTableSchema(ctx context.Context, sourceType pbmodel.DataSource_Type, sourceURL *pbmodel.DataSource_URL, tableName string) (*pbresponse.DescribeDataSourceTableSchema, error) {
 
 	var columns []*pbdatasource.TableColumn
@@ -373,6 +419,8 @@ func DescribeDataSourceTableSchema(ctx context.Context, sourceType pbmodel.DataS
 		columns, err = DescribeDatasourceTableSchemaHive(ctx, sourceURL.Hive, tableName)
 	case pbmodel.DataSource_HBase:
 		columns, err = DescribeDatasourceTableSchemaHbase(ctx, sourceURL.Hbase, tableName)
+	case pbmodel.DataSource_OceanBase:
+		columns, err = DescribeDatasourceTableSchemaOceanBase(ctx, sourceURL.Oceanbase, tableName)
 
 	default:
 		return nil, qerror.NotSupportSourceType.Format(sourceType)
