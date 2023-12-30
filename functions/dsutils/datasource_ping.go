@@ -5,11 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"net"
-	"strconv"
-	"strings"
-	"time"
-
 	"github.com/DataWorkbench/gproto/xgo/types/pbmodel"
 	"github.com/DataWorkbench/gproto/xgo/types/pbmodel/pbdatasource"
 	"github.com/Shopify/sarama"
@@ -23,11 +18,16 @@ import (
 	elastic7 "github.com/olivere/elastic/v7"
 	"github.com/pkg/sftp"
 	"github.com/samuel/go-zookeeper/zk"
+	_ "github.com/sijms/go-ora/v2"
 	"golang.org/x/crypto/ssh"
 	"gopkg.in/mgo.v2"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"net"
+	"strconv"
+	"strings"
+	"time"
 )
 
 func pingNetwork(address string, port int32) (err error) {
@@ -59,6 +59,26 @@ func pingMysql(url *pbdatasource.MySQLURL) (err error) {
 	} else {
 		if sqlDB, e := db.DB(); e == nil {
 			_ = sqlDB.Close()
+		}
+	}
+	return nil
+}
+
+func pingOracle(url *pbdatasource.OracleURL) (err error) {
+	if err = pingNetwork(url.Host, url.Port); err != nil {
+		return
+	}
+
+	connStr := fmt.Sprintf("oracle://%s:%s@%s:%d/%s", url.User, url.Password, url.Host, url.Port, url.Database)
+
+	var db *sql.DB
+	db, err = sql.Open("oracle", connStr)
+
+	if err != nil {
+		return err
+	} else {
+		if e := db.Ping(); e == nil {
+			_ = db.Close()
 		}
 	}
 	return nil
@@ -332,7 +352,7 @@ func PingDataSourceConnection(ctx context.Context, sourceType pbmodel.DataSource
 	case pbmodel.DataSource_SqlServer:
 		err = pingSqlServer(sourceURL.Sqlserver)
 	case pbmodel.DataSource_Oracle:
-		//empty
+		err = pingOracle(sourceURL.Oracle)
 	case pbmodel.DataSource_DB2:
 		//empty
 	case pbmodel.DataSource_SapHana:

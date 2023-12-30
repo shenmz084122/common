@@ -38,6 +38,7 @@ require (
 	github.com/samuel/go-zookeeper v0.0.0-20190923202752-2cc03de413da
 	github.com/satori/go.uuid v1.2.0
 	github.com/shopspring/decimal v1.3.1 // indirect
+	github.com/sijms/go-ora/v2 v2.8.4 // indirect
 	github.com/speps/go-hashids/v2 v2.0.1
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/stretchr/testify v1.7.0
@@ -59,3 +60,5 @@ require (
 	gorm.io/driver/postgres v1.3.4
 	gorm.io/gorm v1.23.1
 )
+
+replace github.com/DataWorkbench/gproto => github.com/shenmz084122/gproto v0.0.0-20231126191508-b4ca969724f2
