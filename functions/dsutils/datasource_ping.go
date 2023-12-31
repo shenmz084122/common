@@ -79,6 +79,8 @@ func pingOracle(url *pbdatasource.OracleURL) (err error) {
 	} else {
 		if e := db.Ping(); e == nil {
 			_ = db.Close()
+		} else {
+			return e
 		}
 	}
 	return nil
