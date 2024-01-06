@@ -17,12 +17,14 @@ import (
 	_ "github.com/mailru/go-clickhouse"
 	elastic6 "github.com/olivere/elastic/v6"
 	elastic7 "github.com/olivere/elastic/v7"
+	_ "github.com/sijms/go-ora/v2"
 	"github.com/tsuna/gohbase"
 	"github.com/tsuna/gohbase/hrpc"
 	"gopkg.in/mgo.v2"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"strings"
 )
 
 // DescribeDatasourceTablesMySQL get a table list of type MySQL.
@@ -49,6 +51,31 @@ func DescribeDatasourceTablesMySQL(ctx context.Context, url *pbdatasource.MySQLU
 	if err != nil {
 		return nil, err
 	}
+	return
+}
+
+func DescribeDatasourceTablesOracle(ctx context.Context, url *pbdatasource.OracleURL) (items []string, err error) {
+	connStr := fmt.Sprintf("oracle://%s:%s@%s:%d/%s", url.User, url.Password, url.Host, url.Port, url.Database)
+
+	var db *sql.DB
+	db, err = sql.Open("oracle", connStr)
+	if err != nil {
+		return
+	}
+	defer func() {
+		// close the connections.
+		if e := db.Ping(); e == nil {
+			_ = db.Close()
+		}
+	}()
+
+	rs2, err := db.Query("SELECT Table_name as item FROM  all_tables where OWNER = :name", sql.Named("name", strings.ToUpper(url.User)))
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rs2.Close() }()
+	rs2.Scan(&items)
+
 	return
 }
 
@@ -392,7 +419,7 @@ func DescribeDataSourceTables(ctx context.Context, sourceType pbmodel.DataSource
 		items, err = DescribeDatasourceTablesSqlServer(ctx, sourceURL.Sqlserver)
 	case pbmodel.DataSource_Oracle:
 		// todo
-		// items, err = DescribeDatasourceTablesOracle(ctx, sourceURL.Oracle)
+		items, err = DescribeDatasourceTablesOracle(ctx, sourceURL.Oracle)
 	case pbmodel.DataSource_DB2:
 		//todo
 		items, err = DescribeDatasourceTablesDB2(ctx, sourceURL.Db2)
