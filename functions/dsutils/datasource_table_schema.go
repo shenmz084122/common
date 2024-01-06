@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/DataWorkbench/common/qerror"
@@ -101,15 +102,25 @@ func DescribeDatasourceTableSchemaOracle(ctx context.Context, url *pbdatasource.
 		}
 	}()
 
-	rs2, err := db.Query("select c.COLUMN_NAME as name, c.DATA_TYPE as type, case p.CONSTRAINT_TYPE when 'P' then 'true' else 'false' end as is_primary_key FROM user_tab_columns c , all_constraints p WHERE  p.CONSTRAINT_NAME(+) = c.COLUMN_NAME and c.table_name = &1", strings.ToUpper(tableName))
+	rs2, err := db.Query("select c.COLUMN_NAME as name, c.DATA_TYPE as types, case p.CONSTRAINT_TYPE when 'P' then 'true' else 'false' end as iskey FROM user_tab_columns c , all_constraints p WHERE  p.CONSTRAINT_NAME(+) = c.COLUMN_NAME and c.table_name = &1", strings.ToUpper(tableName))
 	if err != nil {
 		return nil, err
 	}
 	defer func() { _ = rs2.Close() }()
 
 	for rs2.Next() {
+		var name, types, iskey string
+		_ = rs2.Scan(&name, &types, &iskey)
 		var column *pbdatasource.TableColumn
-		_ = rs2.Scan(&column.Name, &column.Type, &column.IsPrimaryKey)
+		column.Name = name
+		column.Type = types
+
+		b, err := strconv.ParseBool(iskey)
+		if err != nil {
+			fmt.Println("无法将字符串转换为布尔值")
+		}
+
+		column.IsPrimaryKey = b
 		columns = append(columns, column)
 	}
 
