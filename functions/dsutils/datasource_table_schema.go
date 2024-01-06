@@ -101,7 +101,7 @@ func DescribeDatasourceTableSchemaOracle(ctx context.Context, url *pbdatasource.
 		}
 	}()
 
-	rs2, err := db.Query("select c.COLUMN_NAME as name, c.DATA_TYPE as type, case p.CONSTRAINT_TYPE when 'P' then 'true' else 'false' end as is_primary_key FROM user_tab_columns c , all_constraints p WHERE  c.table_name = &1 and p.CONSTRAINT_NAME(+) = c.COLUMN_NAME;", strings.ToUpper(tableName))
+	rs2, err := db.Query("select c.COLUMN_NAME as name, c.DATA_TYPE as type, case p.CONSTRAINT_TYPE when 'P' then 'true' else 'false' end as is_primary_key FROM user_tab_columns c , all_constraints p WHERE  c.table_name = &1 and p.CONSTRAINT_NAME = c.COLUMN_NAME;", strings.ToUpper(tableName))
 	if err != nil {
 		return nil, err
 	}
