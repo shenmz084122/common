@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/DataWorkbench/common/qerror"
 	"github.com/DataWorkbench/gproto/xgo/types/pbmodel"
@@ -68,7 +69,7 @@ func DescribeDatasourceTablesOracle(ctx context.Context, url *pbdatasource.Oracl
 		}
 	}()
 
-	rs2, err := db.Query("SELECT Table_name as item FROM  all_tables where OWNER = strings.ToUpper(url.User)")
+	rs2, err := db.Query("SELECT Table_name as item FROM  all_tables where OWNER = &1", strings.ToUpper(url.User))
 	if err != nil {
 		return nil, err
 	}
