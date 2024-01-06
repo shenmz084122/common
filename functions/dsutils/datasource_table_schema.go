@@ -85,6 +85,37 @@ func DescribeDatasourceTableSchemaMySQL(ctx context.Context, url *pbdatasource.M
 	return
 }
 
+func DescribeDatasourceTableSchemaOracle(ctx context.Context, url *pbdatasource.OracleURL,
+	tableName string) (columns []*pbdatasource.TableColumn, err error) {
+	connStr := fmt.Sprintf("oracle://%s:%s@%s:%d/%s", url.User, url.Password, url.Host, url.Port, url.Database)
+
+	var db *sql.DB
+	db, err = sql.Open("oracle", connStr)
+	if err != nil {
+		return
+	}
+	defer func() {
+		// close the connections.
+		if e := db.Ping(); e == nil {
+			_ = db.Close()
+		}
+	}()
+
+	rs2, err := db.Query("select * FROM user_tab_columns where TABLE_NAME = &1", strings.ToUpper(tableName))
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rs2.Close() }()
+
+	for rs2.Next() {
+		var column *pbdatasource.TableColumn
+		_ = rs2.Scan(&column)
+		columns = append(columns, column)
+	}
+
+	return
+}
+
 func DescribeDatasourceTableSchemaOceanBase(ctx context.Context, url *pbdatasource.OceanBaseURL,
 	tableName string) (columns []*pbdatasource.TableColumn, err error) {
 	dsn := fmt.Sprintf(
@@ -410,7 +441,7 @@ func DescribeDataSourceTableSchema(ctx context.Context, sourceType pbmodel.DataS
 	case pbmodel.DataSource_SqlServer:
 		columns, err = DescribeDatasourceTableSchemaSqlServer(ctx, sourceURL.Sqlserver, tableName)
 	case pbmodel.DataSource_Oracle:
-		//empty
+		columns, err = DescribeDatasourceTableSchemaOracle(ctx, sourceURL.Oracle, tableName)
 	case pbmodel.DataSource_DB2:
 		//empty
 	case pbmodel.DataSource_SapHana:
