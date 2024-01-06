@@ -24,7 +24,6 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"strings"
 )
 
 // DescribeDatasourceTablesMySQL get a table list of type MySQL.
@@ -69,12 +68,17 @@ func DescribeDatasourceTablesOracle(ctx context.Context, url *pbdatasource.Oracl
 		}
 	}()
 
-	rs2, err := db.Query("SELECT Table_name as item FROM  all_tables where OWNER = &1", strings.ToUpper(url.User))
+	rs2, err := db.Query("SELECT Table_name as item FROM  all_tables where OWNER = strings.ToUpper(url.User)")
 	if err != nil {
 		return nil, err
 	}
 	defer func() { _ = rs2.Close() }()
-	rs2.Scan(&items)
+
+	for rs2.Next() {
+		var item string
+		_ = rs2.Scan(&item)
+		items = append(items, item)
+	}
 
 	return
 }
