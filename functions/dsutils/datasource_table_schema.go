@@ -109,7 +109,7 @@ func DescribeDatasourceTableSchemaOracle(ctx context.Context, url *pbdatasource.
 
 	for rs2.Next() {
 		var column *pbdatasource.TableColumn
-		_ = rs2.Scan(&column)
+		_ = rs2.Scan(&column.Name, &column.Type, &column.IsPrimaryKey)
 		columns = append(columns, column)
 	}
 
