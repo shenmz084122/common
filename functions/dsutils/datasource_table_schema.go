@@ -111,16 +111,18 @@ func DescribeDatasourceTableSchemaOracle(ctx context.Context, url *pbdatasource.
 	for rs2.Next() {
 		var name, types, iskey string
 		_ = rs2.Scan(&name, &types, &iskey)
-		var column *pbdatasource.TableColumn
-		column.Name = name
-		column.Type = types
 
 		b, err := strconv.ParseBool(iskey)
 		if err != nil {
 			fmt.Println("无法将字符串转换为布尔值")
 		}
 
-		column.IsPrimaryKey = b
+		column := &pbdatasource.TableColumn{
+			Name:         name,
+			Type:         types,
+			IsPrimaryKey: b,
+		}
+
 		columns = append(columns, column)
 	}
 
