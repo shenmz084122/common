@@ -63,7 +63,7 @@ func NewMySQLConn(ctx context.Context, cfg *MySQLConfig) (db *gorm.DB, err error
 	}
 
 	dsn := fmt.Sprintf(
-		"%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		"%s:%s@tcp(%s)/%s?charset=utf8&parseTime=True&loc=Local",
 		cfg.Users, cfg.Password, hosts[0], cfg.Database,
 	)
 

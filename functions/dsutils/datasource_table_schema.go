@@ -43,7 +43,7 @@ func escapeColumnTypeForCK(columnType string) string {
 func DescribeDatasourceTableSchemaMySQL(ctx context.Context, url *pbdatasource.MySQLURL,
 	tableName string) (columns []*pbdatasource.TableColumn, err error) {
 	dsn := fmt.Sprintf(
-		"%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		"%s:%s@tcp(%s:%d)/%s?charset=utf8&parseTime=True&loc=Local",
 		url.User, url.Password, url.Host, url.Port, url.Database,
 	)
 
