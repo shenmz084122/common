@@ -49,7 +49,7 @@ func pingMysql(url *pbdatasource.MySQLURL) (err error) {
 	}
 
 	dsn := fmt.Sprintf(
-		"%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		"%s:%s@tcp(%s:%d)/%s?charset=utf8&parseTime=True&loc=Local",
 		url.User, url.Password, url.Host, url.Port, url.Database,
 	)
 	var db *gorm.DB
