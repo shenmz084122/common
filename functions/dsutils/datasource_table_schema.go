@@ -88,7 +88,7 @@ func DescribeDatasourceTableSchemaMySQL(ctx context.Context, url *pbdatasource.M
 
 func DescribeDatasourceTableSchemaOracle(ctx context.Context, url *pbdatasource.OracleURL,
 	tableName string) (columns []*pbdatasource.TableColumn, err error) {
-	connStr := fmt.Sprintf("oracle://%s:%s@%s:%d/%s", url.User, url.Password, url.Host, url.Port, url.Database)
+	connStr := fmt.Sprintf("oracle://%s:%s@%s:%d?SID=%s", url.User, url.Password, url.Host, url.Port, url.Database)
 
 	var db *sql.DB
 	db, err = sql.Open("oracle", connStr)
