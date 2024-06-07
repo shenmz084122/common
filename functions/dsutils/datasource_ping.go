@@ -69,7 +69,7 @@ func pingOracle(url *pbdatasource.OracleURL) (err error) {
 		return
 	}
 
-	connStr := fmt.Sprintf("oracle://%s:%s@%s:%d/%s", url.User, url.Password, url.Host, url.Port, url.Database)
+	connStr := fmt.Sprintf("oracle://%s:%s@%s:%d?SID=%s", url.User, url.Password, url.Host, url.Port, url.Database)
 
 	var db *sql.DB
 	db, err = sql.Open("oracle", connStr)
