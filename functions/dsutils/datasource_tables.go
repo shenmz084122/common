@@ -68,8 +68,13 @@ func DescribeDatasourceTablesOracle(ctx context.Context, url *pbdatasource.Oracl
 			_ = db.Close()
 		}
 	}()
-
-	rs2, err := db.Query("SELECT Table_name as item FROM  all_tables where OWNER = &1", strings.ToUpper(url.User))
+	var owner string
+	if url.Schema != "" {
+		owner = url.Schema
+	} else {
+		owner = url.User
+	}
+	rs2, err := db.Query("SELECT Table_name as item FROM  all_tables where OWNER = &1", strings.ToUpper(owner))
 	if err != nil {
 		return nil, err
 	}
