@@ -70,6 +70,8 @@ type File struct {
 	// Compress determines if the rotated log files should be compressed
 	// using gzip. The default is not to perform compression.
 	Compress bool `json:"compress" yaml:"compress" env:"COMPRESS" validate:"-"`
+
+	Base string `json:"base" yaml:"base" env:"Base" validate:"required"`
 }
 
 func checkConfig(cfg *Config) (err error) {
