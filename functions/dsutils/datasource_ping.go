@@ -25,6 +25,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"net"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -104,6 +105,40 @@ func pingOceanBaseURL(url *pbdatasource.OceanBaseURL) (err error) {
 			_ = sqlDB.Close()
 		}
 	}
+	return nil
+}
+func pingWebApi(url *pbdatasource.WebApiURL) (err error) {
+	weburl := fmt.Sprintf(
+		"http://%s:%s/%s",
+		url.Host, url.Port, url.Url) // 替换为你的API URL
+	client := http.Client{
+		Timeout: 30 * time.Second, // 设置超时时间
+	}
+
+	resp, err := client.Head(weburl)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	//if resp.StatusCode == http.StatusOK {
+	return nil
+	//}
+}
+
+func pingMqtt(url *pbdatasource.MqttURL) (err error) {
+	// 替换为你的MQTT服务器地址和端口
+	host := fmt.Sprintf(
+		"%s:%s",
+		url.Host, url.Port)
+	timeout := 30 * time.Second
+
+	// 尝试建立TCP连接
+	conn, err := net.DialTimeout("tcp", host, timeout)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
 	return nil
 }
 
@@ -381,6 +416,10 @@ func PingDataSourceConnection(ctx context.Context, sourceType pbmodel.DataSource
 		err = pingRedis(sourceURL.Redis)
 	case pbmodel.DataSource_OceanBase:
 		err = pingOceanBaseURL(sourceURL.Oceanbase)
+	case pbmodel.DataSource_Mqtt:
+		err = pingMqtt(sourceURL.Mqtt)
+	case pbmodel.DataSource_WebApi:
+		err = pingWebApi(sourceURL.Webapi)
 	}
 
 	if err != nil {
