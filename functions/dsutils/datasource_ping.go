@@ -109,7 +109,7 @@ func pingOceanBaseURL(url *pbdatasource.OceanBaseURL) (err error) {
 }
 func pingWebApi(url *pbdatasource.WebApiURL) (err error) {
 	weburl := fmt.Sprintf(
-		"http://%s:%s/%s",
+		"http://%s:%d/%s",
 		url.Host, url.Port, url.Url) // 替换为你的API URL
 	client := http.Client{
 		Timeout: 30 * time.Second, // 设置超时时间
@@ -129,7 +129,7 @@ func pingWebApi(url *pbdatasource.WebApiURL) (err error) {
 func pingMqtt(url *pbdatasource.MqttURL) (err error) {
 	// 替换为你的MQTT服务器地址和端口
 	host := fmt.Sprintf(
-		"%s:%s",
+		"%s:%d",
 		url.Host, url.Port)
 	timeout := 30 * time.Second
 
