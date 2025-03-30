@@ -84,7 +84,7 @@ func DescribeDatasourceTablesOracle(ctx context.Context, url *pbdatasource.Oracl
 		items = append(items, item)
 	}
 
-	rs3, err := db.Query("SELECT View_name as item FROM  dba_views where OWNER = &1", owner)
+	rs3, err := db.Query("SELECT View_name as item FROM  all_views where OWNER = &1", owner)
 	if err != nil {
 		return nil, err
 	}
