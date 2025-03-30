@@ -61,4 +61,4 @@ require (
 	gorm.io/gorm v1.23.1
 )
 
-replace github.com/DataWorkbench/gproto => github.com/shenmz084122/gproto v0.0.0-20250330090013-12f196a013ed
+replace github.com/DataWorkbench/gproto => github.com/shenmz084122/gproto v0.0.0-20250330110018-674c1b9092fb
