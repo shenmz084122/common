@@ -52,7 +52,7 @@ func DescribeDatasourceTablesMySQL(ctx context.Context, url *pbdatasource.MySQLU
 	return
 }
 
-func DescribeDatasourceTablesOracle(ctx context.Context, url *pbdatasource.OracleURL) (items []string, err error) {
+func DescribeDatasourceTablesOracle(ctx context.Context, url *pbdatasource.OracleURL, isSource string) (items []string, err error) {
 	connStr := fmt.Sprintf("oracle://%s:%s@%s:%d?SID=%s", url.User, url.Password, url.Host, url.Port, url.Database)
 
 	var db *sql.DB
@@ -83,17 +83,18 @@ func DescribeDatasourceTablesOracle(ctx context.Context, url *pbdatasource.Oracl
 		_ = rs2.Scan(&item)
 		items = append(items, item)
 	}
+	if isSource == "1" {
+		rs3, err := db.Query("SELECT View_name as item FROM  all_views where OWNER = &1", owner)
+		if err != nil {
+			return nil, err
+		}
+		defer func() { _ = rs3.Close() }()
 
-	rs3, err := db.Query("SELECT View_name as item FROM  all_views where OWNER = &1", owner)
-	if err != nil {
-		return nil, err
-	}
-	defer func() { _ = rs3.Close() }()
-
-	for rs3.Next() {
-		var item string
-		_ = rs3.Scan(&item)
-		items = append(items, item)
+		for rs3.Next() {
+			var item string
+			_ = rs3.Scan(&item)
+			items = append(items, item)
+		}
 	}
 
 	return
@@ -418,7 +419,7 @@ func DescribeDatasourceTablesHbase(ctx context.Context, url *pbdatasource.HBaseU
 }
 
 // DescribeDataSourceTables get a table list of specified data source.
-func DescribeDataSourceTables(ctx context.Context, sourceType pbmodel.DataSource_Type, sourceURL *pbmodel.DataSource_URL) (
+func DescribeDataSourceTables(ctx context.Context, sourceType pbmodel.DataSource_Type, sourceURL *pbmodel.DataSource_URL, isSource string) (
 	*pbresponse.DescribeDataSourceTables, error) {
 	var items []string
 	var err error
@@ -439,7 +440,7 @@ func DescribeDataSourceTables(ctx context.Context, sourceType pbmodel.DataSource
 		items, err = DescribeDatasourceTablesSqlServer(ctx, sourceURL.Sqlserver)
 	case pbmodel.DataSource_Oracle:
 		// todo
-		items, err = DescribeDatasourceTablesOracle(ctx, sourceURL.Oracle)
+		items, err = DescribeDatasourceTablesOracle(ctx, sourceURL.Oracle, isSource)
 	case pbmodel.DataSource_DB2:
 		//todo
 		items, err = DescribeDatasourceTablesDB2(ctx, sourceURL.Db2)
